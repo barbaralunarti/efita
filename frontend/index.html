@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inscrição | EFITA</title>
+  <link rel="stylesheet" href="./styles/global.css" />
+  <link rel="stylesheet" href="./styles/forms.css" />
+  <style>
+    .hero-section {
+      text-align: center;
+      padding: 4rem 1rem 2rem;
+    }
+    .hero-title {
+      font-size: 2.5rem;
+      color: var(--primary);
+      margin-bottom: 1rem;
+    }
+    .hero-subtitle {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .form-container {
+      max-width: 800px;
+      margin: 0 auto 4rem;
+    }
+    #poster-section {
+      display: none;
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px dashed var(--border-color);
+    }
+    
+    #success-screen {
+      text-align: center;
+      padding: 3rem 1rem;
+    }
+    .protocol-box {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px dashed var(--primary);
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin: 2rem auto;
+      max-width: 400px;
+    }
+    .protocol-number {
+      font-size: 2rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 2px;
+    }
+    .info-banner {
+      background-color: rgba(245, 158, 11, 0.1);
+      border-left: 4px solid var(--warning);
+      padding: 1rem;
+      text-align: left;
+      margin: 2rem 0;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="hero-section">
+      <h1 class="hero-title">Encontro de Física do ITA</h1>
+      <p class="hero-subtitle">Sistema de Gestão de Inscrições. Preencha o formulário abaixo para submeter sua inscrição e (opcionalmente) seu pôster.</p>
+    </header>
+
+    <main class="form-container">
+      <div class="card" id="form-card">
+        <form id="inscricao-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="cpf">CPF</label>
+              <input type="text" id="cpf" name="cpf" class="form-control" placeholder="000.000.000-00" required>
+              <div class="error-message">CPF inválido</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="nome">Nome Completo</label>
+              <input type="text" id="nome" name="nome" class="form-control" placeholder="Seu nome" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="email">E-mail</label>
+              <input type="email" id="email" name="email" class="form-control" placeholder="seu@email.com" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="instituicao">Instituição</label>
+              <input type="text" id="instituicao" name="instituicao" class="form-control" placeholder="Ex: USP, ITA, Unicamp" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="categoria">Categoria</label>
+              <select id="categoria" name="categoria" class="form-control" required>
+                <option value="" disabled selected>Selecione...</option>
+                <option value="graduacao">Graduação</option>
+                <option value="pos_graduacao">Pós-Graduação</option>
+                <option value="professor">Professor</option>
+                <option value="profissional">Profissional</option>
+              </select>
+            </div>
+            <div class="form-group hidden" id="matricula-group">
+              <label class="form-label" for="matricula_ita">Matrícula ITA</label>
+              <input type="text" id="matricula_ita" name="matricula_ita" class="form-control" placeholder="Número de matrícula">
+              <div class="error-message">Matrícula obrigatória para alunos do ITA</div>
+            </div>
+          </div>
+
+          <label class="checkbox-group">
+            <input type="checkbox" id="tem_poster" name="tem_poster">
+            <span class="form-label" style="margin: 0;">Desejo submeter um pôster</span>
+          </label>
+
+          <div id="poster-section">
+            <h3 class="mb-2">Dados do Pôster</h3>
+            <div class="form-group">
+              <label class="form-label" for="titulo_poster">Título</label>
+              <input type="text" id="titulo_poster" name="titulo_poster" class="form-control" placeholder="Título do trabalho">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="palavras_chave">Palavras-chave</label>
+              <input type="text" id="palavras_chave" name="palavras_chave" class="form-control" placeholder="Separadas por vírgula">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="resumo">Resumo</label>
+              <textarea id="resumo" name="resumo" class="form-control" placeholder="Resumo do seu trabalho..."></textarea>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <button type="submit" class="btn btn-primary w-full" id="submit-btn">Finalizar Inscrição</button>
+          </div>
+          
+          <div id="form-error" class="error-message text-center mt-4"></div>
+        </form>
+      </div>
+
+      <!-- Tela de Sucesso -->
+      <div class="card hidden" id="success-screen">
+        <h2 style="color: var(--success); margin-bottom: 1rem;">Inscrição Recebida!</h2>
+        <p>Sua solicitação foi processada com sucesso.</p>
+        
+        <div class="protocol-box">
+          <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">Seu Protocolo</div>
+          <div class="protocol-number" id="success-protocolo">EFITA-2025-00000</div>
+          <button class="btn btn-outline" style="margin-top: 1rem; padding: 0.5rem 1rem; font-size: 0.85rem;" onclick="navigator.clipboard.writeText(document.getElementById('success-protocolo').innerText)">Copiar Protocolo</button>
+        </div>
+
+        <div class="info-banner">
+          <strong>Verifique sua caixa de entrada!</strong><br>
+          Enviamos um e-mail de recebimento para <span id="success-email"></span> com as instruções sobre os próximos passos.
+        </div>
+
+        <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+          <button class="btn btn-primary" onclick="window.print()">Imprimir Comprovante</button>
+          <a href="/consulta.html" class="btn btn-outline">Acompanhar Status</a>
+        </div>
+      </div>
+
+      <div class="text-center mt-4">
+        <a href="/consulta.html">Já é inscrito? Consulte seu status</a>
+      </div>
+    </main>
+  </div>
+  
+  <script type="module" src="/src/api.js"></script>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>EFITA — Recebimento de Inscrição</title>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #0f172a; color: #e2e8f0; margin: 0; padding: 0; }
+    .wrapper { max-width: 600px; margin: 40px auto; background: #1e293b; border-radius: 12px; overflow: hidden; }
+    .header { background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%); padding: 32px; text-align: center; }
+    .header h1 { margin: 0; font-size: 28px; color: #fff; letter-spacing: 1px; }
+    .header p { margin: 8px 0 0; color: rgba(255,255,255,.8); font-size: 14px; }
+    .body { padding: 32px; }
+    .protocolo-box { background: #0f172a; border: 2px solid #3b82f6; border-radius: 10px; padding: 20px; text-align: center; margin-bottom: 28px; }
+    .protocolo-label { font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+    .protocolo-value { font-size: 26px; font-weight: 700; color: #3b82f6; font-family: monospace; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+    .info-item { background: #0f172a; border-radius: 8px; padding: 12px 16px; }
+    .info-item .label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+    .info-item .value { font-size: 14px; color: #e2e8f0; font-weight: 500; }
+    .alert-box { background: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.4); border-radius: 8px; padding: 16px; margin-bottom: 24px; color: #fde68a; font-size: 13px; }
+    .footer { background: #0f172a; padding: 20px 32px; text-align: center; font-size: 12px; color: #475569; border-top: 1px solid #1e293b; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>EFITA</h1>
+      <p>Encontro de Física do ITA — Inscrição Recebida</p>
+    </div>
+    <div class="body">
+      <p>Olá, <strong>{{ participante.nome }}</strong>!</p>
+      <p>Sua inscrição para o EFITA foi recebida com sucesso. Guarde seu número de protocolo:</p>
+
+      <div class="protocolo-box">
+        <div class="protocolo-label">Número de Protocolo</div>
+        <div class="protocolo-value">EFITA-2025-{{ "%05d" | format(participante.id) }}</div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="label">Nome</div>
+          <div class="value">{{ participante.nome }}</div>
+        </div>
+        <div class="info-item">
+          <div class="label">E-mail</div>
+          <div class="value">{{ participante.email }}</div>
+        </div>
+        <div class="info-item">
+          <div class="label">Instituição</div>
+          <div class="value">{{ participante.instituicao }}</div>
+        </div>
+        <div class="info-item">
+          <div class="label">Categoria</div>
+          <div class="value">{{ participante.categoria.value | replace("_", " ") | title }}</div>
+        </div>
+        {% if participante.poster %}
+        <div class="info-item" style="grid-column: 1/-1;">
+          <div class="label">Pôster submetido</div>
+          <div class="value">{{ participante.poster.titulo }}</div>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="alert-box">
+        ⏳ Sua inscrição está em análise. Você será notificado por e-mail assim que a coordenação emitir uma deliberação.
+      </div>
+
+      <p style="color:#94a3b8; font-size:13px;">
+        Guarde este protocolo para consultar o status da sua inscrição em qualquer momento.
+      </p>
+    </div>
+    <div class="footer">
+      EFITA — Encontro de Física do ITA &bull; Este é um e-mail automático, não responda.
+    </div>
+  </div>
+</body>
+</html>
