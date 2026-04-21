@@ -65,9 +65,36 @@ Certifique-se de ter os seguintes itens instalados no seu ambiente local:
 
 ## 🔧 Instalação e Configuração
 
-Siga os passos abaixo para rodar o projeto localmente.
+Você pode executar o projeto de forma simplificada utilizando Docker, ou configurando os ambientes manualmente.
 
-### 1. Configurando o Backend
+### 🐳 Rodando com Docker (Recomendado)
+
+Certifique-se de ter o [Docker](https://docs.docker.com/get-docker/) e o Docker Compose instalados.
+
+1. Na raiz do projeto, execute o comando para construir as imagens e subir os containers em segundo plano:
+   ```bash
+   docker-compose up --build -d
+   ```
+
+2. Acesse os serviços:
+   - **Frontend**: [http://localhost:8080](http://localhost:8080)
+   - **Backend API**: [http://localhost:8000](http://localhost:8000)
+   - **Documentação da API (Swagger)**: [http://localhost:8000/docs](http://localhost:8000/docs)
+
+3. Para parar e remover os containers, execute:
+   ```bash
+   docker-compose down
+   ```
+
+*(Nota: O banco de dados SQLite será persistido automaticamente em um volume Docker local).*
+
+---
+
+### 💻 Rodando Manualmente
+
+Siga os passos abaixo se preferir rodar os serviços individualmente sem o Docker.
+
+#### 1. Configurando o Backend
 
 Navegue até a pasta do backend:
 ```bash
@@ -110,7 +137,7 @@ python run.py
 # A documentação da API pode ser acessada em http://localhost:8000/docs
 ```
 
-### 2. Configurando o Frontend
+#### 2. Configurando o Frontend
 
 Abra um novo terminal e navegue até a pasta do frontend:
 ```bash
