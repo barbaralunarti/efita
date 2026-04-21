@@ -15,6 +15,9 @@ from app.models import LogEmail, StatusEmail, TipoEmail
 from app.schemas import InscricaoCreate, InscricaoResponse
 from app.services import participante as svc
 from app.services.email import email_service
+from app.logger import get_logger
+
+logger = get_logger("app.routers.inscricao")
 
 router = APIRouter(prefix="/api/inscricao", tags=["Inscrição"])
 limiter = Limiter(key_func=get_remote_address)
@@ -31,9 +34,12 @@ async def criar_inscricao(
     from sqlalchemy.exc import IntegrityError
 
     try:
+        logger.info(f"📝 Criando inscrição - CPF: {dados.cpf[:3]}***")
         participante = svc.criar_participante(db, dados)
+        logger.info(f"✅ Inscrição criada com sucesso - ID: {participante.id}, Email: {participante.email}")
     except IntegrityError:
         db.rollback()
+        logger.warning(f"⚠️  Inscrição duplicada - CPF ou Email já cadastrado")
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="CPF ou e-mail já cadastrado",
@@ -53,6 +59,7 @@ async def criar_inscricao(
         _db = SessionLocal()
         try:
             svc.registrar_log_email(_db, pid, TipoEmail.RECEBIMENTO, dest, StatusEmail.ENVIADO)
+            logger.info(f"📧 Email de recebimento enviado - Participante ID: {pid}")
         finally:
             _db.close()
 
@@ -61,6 +68,7 @@ async def criar_inscricao(
         _db = SessionLocal()
         try:
             svc.registrar_log_email(_db, pid, TipoEmail.RECEBIMENTO, dest, StatusEmail.FALHA, err)
+            logger.error(f"❌ Falha ao enviar email de recebimento - Participante ID: {pid}, Erro: {err}")
         finally:
             _db.close()
 
@@ -72,8 +80,11 @@ async def criar_inscricao(
 @router.get("/{cpf}", response_model=InscricaoResponse)
 def consultar_inscricao(cpf: str, db: Session = Depends(get_db)):
     """Consulta pública do status da inscrição pelo CPF."""
+    logger.info(f"🔍 Consultando inscrição - CPF: {cpf[:3]}***")
     digits = "".join(c for c in cpf if c.isdigit())
     participante = svc.get_participante_by_cpf(db, digits)
     if not participante:
+        logger.warning(f"⚠️  Inscrição não encontrada - CPF: {cpf[:3]}***")
         raise HTTPException(status_code=404, detail="Inscrição não encontrada")
+    logger.info(f"✅ Inscrição consultada com sucesso - ID: {participante.id}, Status: {participante.status_inscricao}")
     return InscricaoResponse.from_participante(participante)

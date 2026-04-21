@@ -8,7 +8,7 @@ from app.models import Admin, Participante, StatusInscricao, StatusPagamento
 
 
 PARTICIPANTE_EXTERNO = {
-    "cpf": "12345678901",
+    "cpf": "05623895719",
     "nome": "Externo Teste",
     "email": "externo@test.com",
     "instituicao": "USP",
@@ -16,7 +16,7 @@ PARTICIPANTE_EXTERNO = {
 }
 
 PARTICIPANTE_ITA = {
-    "cpf": "11122233344",
+    "cpf": "28287415594",
     "nome": "ITA Teste",
     "email": "ita@test.com",
     "instituicao": "ITA",
@@ -24,7 +24,7 @@ PARTICIPANTE_ITA = {
 }
 
 PARTICIPANTE_COM_POSTER = {
-    "cpf": "99988877766",
+    "cpf": "83261054654",
     "nome": "Com Poster",
     "email": "poster@test.com",
     "instituicao": "USP",

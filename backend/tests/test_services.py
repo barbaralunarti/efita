@@ -18,7 +18,7 @@ from app.services import participante as svc
 class TestCriarParticipante:
     def test_externo_tem_pagamento_pendente(self, db):
         dados = InscricaoCreate(
-            cpf="12345678901",
+            cpf="05623895719",
             nome="Externo",
             email="ext@test.com",
             instituicao="USP",
@@ -31,7 +31,7 @@ class TestCriarParticipante:
 
     def test_ita_tem_pagamento_nao_aplicavel(self, db):
         dados = InscricaoCreate(
-            cpf="11122233344",
+            cpf="28287415594",
             nome="ITA",
             email="ita@ita.br",
             instituicao="ITA",
@@ -45,7 +45,7 @@ class TestCriarParticipante:
     def test_ita_maiusculo_minusculo(self, db):
         """'ita' (minúsculo) deve ser reconhecido como ITA."""
         dados = InscricaoCreate(
-            cpf="55566677788",
+            cpf="83261054654",
             nome="ITA min",
             email="itamin@ita.br",
             instituicao="  ita  ",
@@ -57,7 +57,7 @@ class TestCriarParticipante:
 
     def test_com_poster(self, db):
         dados = InscricaoCreate(
-            cpf="98765432109",
+            cpf="58829757942",
             nome="Com Poster",
             email="poster@test.com",
             instituicao="UNICAMP",
@@ -75,7 +75,7 @@ class TestCriarParticipante:
 
     def test_sem_poster(self, db):
         dados = InscricaoCreate(
-            cpf="10101010101",
+            cpf="31423225740",
             nome="Sem Poster",
             email="sempost@test.com",
             instituicao="UNESP",
@@ -90,8 +90,11 @@ class TestCriarParticipante:
 
 class TestAtualizarStatus:
     def _criar(self, db, suffix=""):
+        # Usa CPFs válidos da lista
+        cpfs = ["25315745813", "13870259108", "07161878500"]
+        idx = int(suffix) if suffix.isdigit() else 0
         dados = InscricaoCreate(
-            cpf=f"1234567890{suffix}",
+            cpf=cpfs[idx % 3],
             nome=f"Participante{suffix}",
             email=f"p{suffix}@test.com",
             instituicao="USP",
@@ -113,7 +116,7 @@ class TestAtualizarStatus:
 
     def test_aprovar_ita_nao_muda_pagamento(self, db):
         dados = InscricaoCreate(
-            cpf="22233344455",
+            cpf="48963429687",
             nome="ITA Srv",
             email="itasrv@ita.br",
             instituicao="ITA",
@@ -129,7 +132,7 @@ class TestAtualizarStatus:
 class TestLogEmail:
     def test_registrar_sucesso(self, db):
         dados = InscricaoCreate(
-            cpf="10203040506",
+            cpf="32306145695",
             nome="Log Test",
             email="log@test.com",
             instituicao="INPE",
@@ -145,7 +148,7 @@ class TestLogEmail:
 
     def test_registrar_falha_com_erro(self, db):
         dados = InscricaoCreate(
-            cpf="60504030201",
+            cpf="05623895719",
             nome="Falha Test",
             email="falha@test.com",
             instituicao="UFRJ",
@@ -173,7 +176,7 @@ class TestDashboard:
             svc.criar_participante(
                 db,
                 InscricaoCreate(
-                    cpf=f"9900000000{i}",
+                    cpf=["28287415594", "83261054654"][i],
                     nome=f"P{i}",
                     email=f"p{i}@d.com",
                     instituicao="ITA" if i == 0 else "USP",

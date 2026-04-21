@@ -13,10 +13,12 @@ from app.models import Admin, Base
 from sqlalchemy.pool import StaticPool
 from app.main import limiter as main_limiter
 from app.routers.inscricao import limiter as inscricao_limiter
+from app.routers.admin import login_limiter as admin_login_limiter
 
 # Desativa o rate limit durante os testes
 main_limiter.enabled = False
 inscricao_limiter.enabled = False
+admin_login_limiter.enabled = False
 
 SQLALCHEMY_TEST_URL = "sqlite:///:memory:"
 

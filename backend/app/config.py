@@ -25,5 +25,14 @@ class Settings(BaseSettings):
     AGENDA_URL: str = "https://efita.ita.br/agenda"
     FRONTEND_ORIGIN: str = "http://localhost:5173"
 
+    def __init__(self, **data):
+        super().__init__(**data)
+        # Validar SECRET_KEY em tempo de inicialização
+        if self.SECRET_KEY in ["change-me-in-production", "troque-por-uma-chave-secreta-forte"]:
+            raise ValueError(
+                "⚠️  SEGURANÇA CRÍTICA: SECRET_KEY não pode ser o valor padrão! "
+                "Configure uma chave segura em .env (use: secrets.token_urlsafe(32))"
+            )
+
 
 settings = Settings()

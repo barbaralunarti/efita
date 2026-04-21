@@ -3,9 +3,11 @@ import csv
 import io
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import StreamingResponse
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
 
 from app.auth import create_access_token, verify_password
@@ -33,21 +35,31 @@ from app.schemas import (
 )
 from app.services import participante as svc
 from app.services.email import email_service
+from app.logger import get_logger
+
+logger = get_logger("app.routers.admin")
 
 router = APIRouter(prefix="/api/admin", tags=["Admin"])
+
+# Limiter específico para proteção de login (brute force)
+login_limiter = Limiter(key_func=get_remote_address)
 
 
 # ── Autenticação ──────────────────────────────────────────────────────────────
 
 @router.post("/login", response_model=TokenResponse)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+@login_limiter.limit("2/5 minutes")
+def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    logger.info(f"🔐 Tentativa de login - Usuário: {form_data.username}")
     admin = db.query(Admin).filter(Admin.username == form_data.username).first()
     if not admin or not verify_password(form_data.password, admin.password_hash):
+        logger.warning(f"❌ Falha na autenticação - Usuário: {form_data.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciais inválidas",
         )
     token = create_access_token({"sub": admin.username})
+    logger.info(f"✅ Login bem-sucedido - Usuário: {form_data.username}")
     return TokenResponse(access_token=token)
 
 
@@ -56,8 +68,9 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 @router.get("/dashboard", response_model=DashboardResponse)
 def dashboard(
     db: Session = Depends(get_db),
-    _: Admin = Depends(get_current_admin),
+    admin: Admin = Depends(get_current_admin),
 ):
+    logger.debug(f"📊 Dashboard acessado - Usuário: {admin.username}")
     stats = svc.get_dashboard_stats(db)
     return DashboardResponse(**stats)
 
@@ -71,18 +84,22 @@ def listar_participantes(
     is_ita: Optional[bool] = None,
     busca: Optional[str] = None,
     db: Session = Depends(get_db),
-    _: Admin = Depends(get_current_admin),
+    admin: Admin = Depends(get_current_admin),
 ):
     from app.models import Categoria
 
+    logger.info(f"📋 Listando participantes - Filtros: status={status_inscricao}, categoria={categoria}, is_ita={is_ita}, busca={busca}")
+    
     cat = None
     if categoria:
         try:
             cat = Categoria(categoria)
         except ValueError:
+            logger.warning(f"⚠️  Categoria inválida: {categoria}")
             raise HTTPException(400, "Categoria inválida")
 
     participantes = svc.listar_participantes(db, status_inscricao, cat, is_ita, busca)
+    logger.info(f"✅ {len(participantes)} participantes encontrados")
     return [ParticipanteListItem.from_participante(p) for p in participantes]
 
 
@@ -90,10 +107,12 @@ def listar_participantes(
 def detalhe_participante(
     participante_id: int,
     db: Session = Depends(get_db),
-    _: Admin = Depends(get_current_admin),
+    admin: Admin = Depends(get_current_admin),
 ):
+    logger.info(f"🔍 Consultando detalhes - Participante ID: {participante_id}")
     p = svc.get_participante_by_id(db, participante_id)
     if not p:
+        logger.warning(f"⚠️  Participante não encontrado - ID: {participante_id}")
         raise HTTPException(404, "Participante não encontrado")
     return p
 
@@ -103,12 +122,16 @@ def atualizar_status(
     participante_id: int,
     dados: StatusUpdate,
     db: Session = Depends(get_db),
-    _: Admin = Depends(get_current_admin),
+    admin: Admin = Depends(get_current_admin),
 ):
+    logger.info(f"📝 Atualizando status - Participante ID: {participante_id}, Novo Status: {dados.status_inscricao}")
     p = svc.get_participante_by_id(db, participante_id)
     if not p:
+        logger.warning(f"⚠️  Participante não encontrado - ID: {participante_id}")
         raise HTTPException(404, "Participante não encontrado")
-    return svc.atualizar_status_inscricao(db, p, dados.status_inscricao)
+    resultado = svc.atualizar_status_inscricao(db, p, dados.status_inscricao)
+    logger.info(f"✅ Status atualizado com sucesso - Participante ID: {participante_id}")
+    return resultado
 
 
 @router.patch("/participantes/{participante_id}/pagamento", response_model=ParticipanteDetail)
@@ -116,12 +139,16 @@ def atualizar_pagamento(
     participante_id: int,
     dados: PagamentoUpdate,
     db: Session = Depends(get_db),
-    _: Admin = Depends(get_current_admin),
+    admin: Admin = Depends(get_current_admin),
 ):
+    logger.info(f"💰 Atualizando pagamento - Participante ID: {participante_id}, Novo Status: {dados.status_pagamento}")
     p = svc.get_participante_by_id(db, participante_id)
     if not p:
+        logger.warning(f"⚠️  Participante não encontrado - ID: {participante_id}")
         raise HTTPException(404, "Participante não encontrado")
-    return svc.atualizar_status_pagamento(db, p, dados.status_pagamento)
+    resultado = svc.atualizar_status_pagamento(db, p, dados.status_pagamento)
+    logger.info(f"✅ Pagamento atualizado com sucesso - Participante ID: {participante_id}")
+    return resultado
 
 
 # ── Pôsteres ──────────────────────────────────────────────────────────────────
@@ -129,8 +156,9 @@ def atualizar_pagamento(
 @router.get("/posters")
 def listar_posters(
     db: Session = Depends(get_db),
-    _: Admin = Depends(get_current_admin),
+    admin: Admin = Depends(get_current_admin),
 ):
+    logger.info(f"📊 Listando pôsteres")
     posters = db.query(Poster).all()
     # Adiciona o nome do participante dinamicamente para o frontend
     result = []
@@ -145,6 +173,7 @@ def listar_posters(
             "status": p.status,
             "created_at": p.created_at
         })
+    logger.info(f"✅ {len(result)} pôsteres encontrados")
     return result
 
 
@@ -153,15 +182,18 @@ def atualizar_status_poster(
     poster_id: int,
     dados: PosterStatusUpdate,
     db: Session = Depends(get_db),
-    _: Admin = Depends(get_current_admin),
+    admin: Admin = Depends(get_current_admin),
 ):
+    logger.info(f"📝 Atualizando status do pôster - ID: {poster_id}, Novo Status: {dados.status}")
     poster = db.query(Poster).filter(Poster.id == poster_id).first()
     if not poster:
+        logger.warning(f"⚠️  Pôster não encontrado - ID: {poster_id}")
         raise HTTPException(404, "Pôster não encontrado")
     
     poster.status = dados.status
     db.commit()
     db.refresh(poster)
+    logger.info(f"✅ Status do pôster atualizado com sucesso - ID: {poster_id}")
     return {"message": "Status do pôster atualizado com sucesso", "status": poster.status}
 
 
@@ -195,6 +227,7 @@ def _enfileirar_email_participante(participante: Participante, tipo_reenvio: boo
         _db = SessionLocal()
         try:
             svc.registrar_log_email(_db, pid, tipo, dest, StatusEmail.ENVIADO)
+            logger.info(f"📧 Email de {tipo.value} enviado com sucesso - Participante ID: {pid}")
         finally:
             _db.close()
 
@@ -203,6 +236,7 @@ def _enfileirar_email_participante(participante: Participante, tipo_reenvio: boo
         _db = SessionLocal()
         try:
             svc.registrar_log_email(_db, pid, tipo, dest, StatusEmail.FALHA, err)
+            logger.error(f"❌ Falha ao enviar email de {tipo.value} - Participante ID: {pid}, Erro: {err}")
         finally:
             _db.close()
 
@@ -212,9 +246,11 @@ def _enfileirar_email_participante(participante: Participante, tipo_reenvio: boo
 @router.post("/emails/disparar-lote")
 async def disparar_lote(
     db: Session = Depends(get_db),
-    _: Admin = Depends(get_current_admin),
+    admin: Admin = Depends(get_current_admin),
 ):
     """Enfileira e-mails para todos os aprovados que ainda não receberam."""
+    logger.info(f"📧 Iniciando disparo em lote de emails - Usuário: {admin.username}")
+    
     aprovados = (
         db.query(Participante)
         .filter(Participante.status_inscricao == StatusInscricao.APROVADO)
@@ -234,6 +270,7 @@ async def disparar_lote(
         html, subject, on_success, on_failure = _enfileirar_email_participante(p)
         await email_service.enqueue(p.email, subject, html, on_success, on_failure)
 
+    logger.info(f"✅ {len(sem_email)} emails enfileirados com sucesso")
     return {
         "enfileirados": len(sem_email),
         "mensagem": "E-mails sendo processados em segundo plano",
@@ -244,25 +281,32 @@ async def disparar_lote(
 async def reenviar_email(
     participante_id: int,
     db: Session = Depends(get_db),
-    _: Admin = Depends(get_current_admin),
+    admin: Admin = Depends(get_current_admin),
 ):
     """Reenvio individual de e-mail de confirmação."""
+    logger.info(f"📧 Reenviando email - Participante ID: {participante_id}")
+    
     p = svc.get_participante_by_id(db, participante_id)
     if not p or p.status_inscricao != StatusInscricao.APROVADO:
+        logger.warning(f"⚠️  Participante não encontrado ou não aprovado - ID: {participante_id}")
         raise HTTPException(404, "Participante não encontrado ou não aprovado")
 
     html, subject, on_success, on_failure = _enfileirar_email_participante(p, tipo_reenvio=True)
     await email_service.enqueue(p.email, f"[Reenvio] {subject}", html, on_success, on_failure)
 
+    logger.info(f"✅ Email reenfileirado com sucesso - Participante ID: {participante_id}")
     return {"mensagem": "E-mail reenfileirado com sucesso"}
 
 
 @router.get("/emails/log", response_model=List[LogEmailResponse])
 def log_emails(
     db: Session = Depends(get_db),
-    _: Admin = Depends(get_current_admin),
+    admin: Admin = Depends(get_current_admin),
 ):
-    return db.query(LogEmail).order_by(LogEmail.enviado_em.desc()).all()
+    logger.info(f"📋 Consultando log de emails")
+    logs = db.query(LogEmail).order_by(LogEmail.enviado_em.desc()).all()
+    logger.info(f"✅ {len(logs)} registros de log encontrados")
+    return logs
 
 
 # ── Exportação ────────────────────────────────────────────────────────────────
@@ -270,8 +314,9 @@ def log_emails(
 @router.get("/export/csv")
 def exportar_csv(
     db: Session = Depends(get_db),
-    _: Admin = Depends(get_current_admin),
+    admin: Admin = Depends(get_current_admin),
 ):
+    logger.info(f"📥 Exportando participantes em CSV - Usuário: {admin.username}")
     participantes = db.query(Participante).order_by(Participante.created_at).all()
 
     output = io.StringIO()
@@ -303,6 +348,7 @@ def exportar_csv(
         )
 
     output.seek(0)
+    logger.info(f"✅ CSV exportado com sucesso - {len(participantes)} registros")
     return StreamingResponse(
         iter([output.getvalue()]),
         media_type="text/csv",
@@ -313,8 +359,9 @@ def exportar_csv(
 @router.get("/export/posters/csv")
 def exportar_posters_csv(
     db: Session = Depends(get_db),
-    _: Admin = Depends(get_current_admin),
+    admin: Admin = Depends(get_current_admin),
 ):
+    logger.info(f"📥 Exportando pôsteres em CSV - Usuário: {admin.username}")
     posters = db.query(Poster).all()
 
     output = io.StringIO()
@@ -340,6 +387,7 @@ def exportar_posters_csv(
         )
 
     output.seek(0)
+    logger.info(f"✅ CSV de pôsteres exportado com sucesso - {len(posters)} registros")
     return StreamingResponse(
         iter([output.getvalue()]),
         media_type="text/csv",

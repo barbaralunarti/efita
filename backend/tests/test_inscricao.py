@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, patch
 
 
 PAYLOAD_EXTERNO = {
-    "cpf": "12345678901",
+    "cpf": "05623895719",
     "nome": "João da Silva",
     "email": "joao@exemplo.com",
     "instituicao": "USP",
@@ -14,7 +14,7 @@ PAYLOAD_EXTERNO = {
 }
 
 PAYLOAD_ITA_GRAD = {
-    "cpf": "11122233344",
+    "cpf": "28287415594",
     "nome": "Maria ITA",
     "email": "maria@ita.br",
     "instituicao": "ITA",
@@ -23,7 +23,7 @@ PAYLOAD_ITA_GRAD = {
 }
 
 PAYLOAD_ITA_PROF = {
-    "cpf": "99988877766",
+    "cpf": "83261054654",
     "nome": "Prof ITA",
     "email": "prof@ita.br",
     "instituicao": "ITA",
@@ -47,7 +47,7 @@ class TestCriarInscricao:
         assert data["protocolo"].startswith("EFITA-2025-")
         assert "cpf_mascarado" in data
         # CPF não deve aparecer em claro
-        assert "12345678901" not in resp.text
+        assert "05623895719" not in resp.text
 
     def test_inscricao_ita_graduacao_sucesso(self, client):
         """Aluno ITA de graduação com matrícula → sucesso; pagamento NAO_APLICAVEL."""
@@ -95,7 +95,7 @@ class TestCriarInscricao:
         """Mesmo e-mail, CPF diferente → 409."""
         with patch("app.services.email.email_service.enqueue", new_callable=AsyncMock):
             client.post("/api/inscricao", json=PAYLOAD_EXTERNO)
-            payload2 = {**PAYLOAD_EXTERNO, "cpf": "99999999999"}
+            payload2 = {**PAYLOAD_EXTERNO, "cpf": "58829757942"}
             resp = client.post("/api/inscricao", json=payload2)
         assert resp.status_code == 409
 
@@ -141,12 +141,12 @@ class TestConsultarInscricao:
 
     def test_consultar_inexistente(self, client):
         """CPF não cadastrado → 404."""
-        resp = client.get("/api/inscricao/00000000000")
+        resp = client.get("/api/inscricao/31423225740")
         assert resp.status_code == 404
 
     def test_consultar_com_formatacao_cpf(self, client):
         """CPF com formatação (pontos e hífen) deve funcionar."""
         with patch("app.services.email.email_service.enqueue", new_callable=AsyncMock):
             client.post("/api/inscricao", json=PAYLOAD_EXTERNO)
-        resp = client.get("/api/inscricao/123.456.789-01")
+        resp = client.get("/api/inscricao/056.238.957-19")
         assert resp.status_code == 200

@@ -5,6 +5,7 @@ from typing import List, Optional
 from pydantic import BaseModel, ConfigDict, EmailStr, field_validator, model_validator
 
 from app.models import Categoria, StatusEmail, StatusInscricao, StatusPagamento, StatusPoster, TipoEmail
+from app.validators import validar_cpf, normalizar_cpf
 
 
 # ── Poster ────────────────────────────────────────────────────────────────────
@@ -64,11 +65,17 @@ class InscricaoCreate(BaseModel):
 
     @field_validator("cpf")
     @classmethod
-    def validar_cpf(cls, v: str) -> str:
-        digits = "".join(c for c in v if c.isdigit())
-        if len(digits) != 11:
-            raise ValueError("CPF deve conter 11 dígitos")
-        return digits
+    def validar_cpf_field(cls, v: str) -> str:
+        """Valida CPF usando algoritmo de dígito verificador (Módulo 11)."""
+        cpf_normalizado = normalizar_cpf(v)
+        
+        if len(cpf_normalizado) != 11:
+            raise ValueError("CPF deve conter exatamente 11 dígitos")
+        
+        if not validar_cpf(cpf_normalizado):
+            raise ValueError("CPF inválido - dígitos verificadores incorretos")
+        
+        return cpf_normalizado
 
     @model_validator(mode="after")
     def validar_matricula(self) -> "InscricaoCreate":
