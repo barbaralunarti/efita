@@ -81,7 +81,17 @@ Certifique-se de ter o [Docker](https://docs.docker.com/get-docker/) e o Docker 
    - **Backend API**: [http://localhost:8000](http://localhost:8000)
    - **Documentação da API (Swagger)**: [http://localhost:8000/docs](http://localhost:8000/docs)
 
-3. Para parar e remover os containers, execute:
+3. **Criar o usuário administrador inicial**:
+   Com os containers rodando, execute o comando abaixo para criar o acesso ao painel administrativo:
+   ```bash
+   # Opção 1: Criação rápida (user: admin / pass: admin)
+   docker exec -it efita_backend python force_seed.py
+
+   # Opção 2: Criação interativa (escolher user/pass)
+   docker exec -it efita_backend python seed_admin.py
+   ```
+
+4. Para parar e remover os containers, execute:
    ```bash
    docker-compose down
    ```
