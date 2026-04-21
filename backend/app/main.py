@@ -26,13 +26,17 @@ async def lifespan(app: FastAPI):
     # ── Startup ──────────────────────────────────────────────
     logger.info("🚀 Iniciando aplicação EFITA...")
     Base.metadata.create_all(bind=engine)
-    await email_service.start_worker()
-    logger.info("✅ Worker de email iniciado")
+    if settings.EMAILS_ENABLED:
+        await email_service.start_worker()
+        logger.info("✅ Worker de email iniciado")
+    else:
+        logger.info("ℹ️  Worker de email NÃO iniciado (feature desabilitada)")
     yield
     # ── Shutdown ─────────────────────────────────────────────
     logger.info("🛑 Encerrando aplicação EFITA...")
-    await email_service.stop_worker()
-    logger.info("✅ Worker de email encerrado")
+    if settings.EMAILS_ENABLED:
+        await email_service.stop_worker()
+        logger.info("✅ Worker de email encerrado")
 
 
 app = FastAPI(

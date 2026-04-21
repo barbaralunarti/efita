@@ -10,6 +10,9 @@ from email.mime.text import MIMEText
 from jinja2 import Environment, FileSystemLoader
 
 from app.config import settings
+from app.logger import get_logger
+
+logger = get_logger("app.services.email")
 
 _TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
 
@@ -82,7 +85,11 @@ class EmailService:
         on_success: Callable[[], Awaitable[None]],
         on_failure: Callable[[str], Awaitable[None]],
     ) -> None:
-        """Adiciona e-mail à fila."""
+        """Adiciona e-mail à fila se a feature estiver habilitada."""
+        if not settings.EMAILS_ENABLED:
+            logger.warning(f"📧 E-mail para {to} IGNORADO (feature desabilitada)")
+            return
+
         if self._queue is None:
             self._queue = asyncio.Queue()
 

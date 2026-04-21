@@ -40,3 +40,4 @@ yarn-error.log
 
 # Agents
 .agents/
+backend/logs/app.log
